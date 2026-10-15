@@ -16,13 +16,13 @@ const GROUPS = [
     items: [
       { href: "/panel", label: "Przegląd", short: "Start", icon: LayoutGrid },
       { href: "/panel/serwery", label: "Serwery", short: "Serwery", icon: Server },
-      { href: "/panel/boty", label: "Własny bot", short: "Mój bot", icon: Bot },
+      { href: "/panel/boty", label: "Boty Pro", short: "Boty Pro", icon: Bot },
     ],
   },
   {
     label: "Konto",
     items: [
-      { href: "/panel/pakiety", label: "Pakiety", short: "Pakiety", icon: CreditCard },
+      { href: "/panel/pakiety", label: "Płatności", short: "Płatności", icon: CreditCard },
       { href: "/panel/konto", label: "Ustawienia konta", short: "Konto", icon: UserRound },
     ],
   },

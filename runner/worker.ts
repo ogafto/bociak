@@ -130,7 +130,7 @@ async function reconcile() {
       starts++;
       void start(record);
     } else if (!want && entry && !entry.busy) {
-      const reason = record.status !== "online" ? "Bot zatrzymany z panelu." : "Hosting wygasł – bot zatrzymany.";
+      const reason = record.status !== "online" ? "Bot zatrzymany z panelu." : "Okres opłacony minął – bot zatrzymany. Przedłuż go w panelu.";
       await stop(record.id, reason);
     } else if (want && entry && !entry.busy && entry.updatedAt !== record.updated_at) {
       entry.updatedAt = record.updated_at;

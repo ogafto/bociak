@@ -1,4 +1,4 @@
-import { Check, Clock, Hash, LayoutTemplate, MousePointerClick, ShieldCheck, X, Zap } from "lucide-react";
+import { Check, Clock, Hash, LayoutGrid, LayoutTemplate, MousePointerClick, ShieldCheck, Trophy, X, Zap } from "lucide-react";
 import { READY_MODULES } from "@/lib/catalog";
 import { LogoMark } from "@/components/ui/logo";
 import { Curtain } from "./curtain";
@@ -13,14 +13,14 @@ const PERKS = [
   { icon: Hash, title: "Kanały i role z listy", text: "Panel widzi Twój serwer, więc niczego nie wpisujesz ręcznie." },
   { icon: LayoutTemplate, title: "Components V2", text: "Nowe wiadomości Discorda: kontenery, miniatury i przyciski." },
   { icon: Zap, title: "Zmiany od razu", text: "Zapisujesz i działa. Bez restartu bota i bez czekania." },
-  { icon: ShieldCheck, title: "Bezpieczny token", text: "W Pro token Twojego bota przechowujemy zaszyfrowany." },
+  { icon: ShieldCheck, title: "Bezpieczny token", text: "Token Twojego Bota Pro przechowujemy zaszyfrowany." },
 ];
 
 export function Perks() {
   return (
     <section className="py-24 sm:py-32">
       <div className={CONTAINER}>
-        <SectionIntro label="Dla każdego serwera" title="Wszystko, czego potrzebujesz," muted="w jednym panelu." />
+        <SectionIntro icon={LayoutGrid} label="Dla każdego serwera" title="Wszystko, czego potrzebujesz," muted="w jednym panelu." />
         <div className="mt-14 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-2">
             {PERKS.map((p, i) => (
@@ -76,7 +76,7 @@ export function Compare() {
   return (
     <section className="py-24 sm:py-32">
       <div className={CONTAINER}>
-        <SectionIntro center label="Dlaczego Bociak" title="Zwykle trzeba kombinować." muted="Z Bociakiem nie musisz." />
+        <SectionIntro center icon={Trophy} label="Dlaczego Bociak" title="Zwykle trzeba kombinować." muted="Z Bociakiem nie musisz." />
         <Reveal tilt className="mx-auto mt-14 max-w-[900px]">
           <Card className="grid grid-cols-1 gap-2 p-2 md:grid-cols-2">
             <div className="p-6">

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Crown, LogOut, Sparkles } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { listBots } from "@/lib/db";
+import { botPayment } from "@/lib/bots";
+import { PLANS, PRO_TRIAL_DAYS, formatPrice } from "@/lib/catalog";
 import { logout } from "@/app/actions/auth";
 import { PanelNav } from "@/components/panel/nav";
 import { BotAvatar } from "@/components/ui/bot-avatar";
@@ -10,19 +13,24 @@ import { SpotlightTracker } from "@/components/landing/motion";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  const bots = listBots(user.id);
+  const paidBots = bots.filter((b) => botPayment(b).paid).length;
+  const pro = PLANS.find((p) => p.id === "pro")!;
 
   const footer = (
     <div className="space-y-3">
-      {user.plan.id === "start" && (
+      {paidBots === 0 && (
         <div className="relative overflow-hidden rounded-[16px] border border-white/[0.07] bg-[#111113] p-4">
           <Curtain base="17 17 19" className="inset-0 opacity-70" />
           <div className="relative flex items-center gap-2 text-[14px] font-medium text-white">
             <Sparkles className="size-4 text-brand-300" />
-            Odblokuj Pro
+            {user.trialUsed ? "Bot Pro" : `Bot Pro · ${PRO_TRIAL_DAYS} dni gratis`}
           </div>
-          <p className="relative mt-1 text-[12.5px] leading-relaxed text-white/70">Własny bot, wszystkie moduły i pełny kreator wiadomości.</p>
-          <Link href="/panel/pakiety" className={btn("primary", "sm", "relative mt-3 w-full")}>
-            Zobacz pakiety
+          <p className="relative mt-1 text-[12.5px] leading-relaxed text-white/70">
+            Twoja nazwa i avatar, wszystkie moduły i pełny kreator. {formatPrice(pro.price)} / mies. za bota.
+          </p>
+          <Link href={bots.length ? "/panel/boty" : "/panel/boty/nowy"} className={btn("primary", "sm", "relative mt-3 w-full")}>
+            {bots.length ? "Moje boty" : "Stwórz Bota Pro"}
           </Link>
         </div>
       )}
@@ -31,8 +39,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium text-white">{user.name}</div>
           <div className="flex items-center gap-1 text-[12px] text-white/45">
-            {user.plan.id !== "start" && <Crown className="size-3 text-amber-300" />}
-            Pakiet {user.plan.name}
+            {paidBots > 0 && <Crown className="size-3 text-amber-300" />}
+            {paidBots > 0 ? `${paidBots} ${paidBots === 1 ? "Bot Pro" : "Boty Pro"}` : "Darmowy Bociak"}
           </div>
         </div>
         <form action={logout}>

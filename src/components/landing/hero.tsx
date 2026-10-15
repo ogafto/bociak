@@ -23,14 +23,13 @@ export function Hero() {
         <Enter delay={0.1}>
           <a
             href="#moduly"
-            className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.08] bg-[#141416]/80 py-1 pl-1 pr-3 text-[13px] text-white/80 backdrop-blur transition-colors hover:border-brand-400/40"
+            className="group inline-flex rounded-full p-px transition-[filter] [background:linear-gradient(90deg,rgb(138_147_255/0.7),rgb(255_255_255/0.1)_45%,rgb(255_255_255/0.1)_65%,rgb(235_69_158/0.45))] hover:brightness-125"
           >
-            <span className="relative overflow-hidden rounded-full bg-brand-500/25 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-brand-300">
-              Nowe
-              <span className="absolute inset-0 -translate-x-full animate-shine-x bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+            <span className="inline-flex items-center gap-2.5 rounded-full bg-[#121214] py-1 pl-1 pr-3 text-[13px] text-white/80">
+              <span className="rounded-full bg-brand-500 px-2.5 py-0.5 text-[11.5px] font-medium text-white shadow-[0_0_16px_-2px_rgb(88_101_242/0.9)]">Nowe</span>
+              Wiadomości w Components V2
+              <ArrowRight className="size-3.5 text-white/50 transition-transform group-hover:translate-x-0.5" />
             </span>
-            Wiadomości w Components V2
-            <ArrowRight className="size-3.5 text-white/50 transition-transform group-hover:translate-x-0.5" />
           </a>
         </Enter>
 

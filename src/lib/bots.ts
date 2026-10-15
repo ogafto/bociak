@@ -37,8 +37,15 @@ export function sharedInviteUrl() {
   return inviteUrl(process.env.SHARED_BOT_CLIENT_ID?.trim() ?? "");
 }
 
-/** `canHost` – czy pakiet właściciela obejmuje własnego bota (hosting jest w cenie Pro). */
-export function toBotView(bot: BotRow, canHost: boolean) {
+/** Bot Pro jest opłacany osobno – działa do daty w hosting_until (opłata albo okres próbny). */
+export function botPayment(bot: Pick<BotRow, "hosting" | "hosting_until">) {
+  const until = bot.hosting_until ? new Date(bot.hosting_until) : null;
+  const paid = !!until && until.getTime() > Date.now();
+  const daysLeft = paid && until ? Math.max(0, Math.ceil((until.getTime() - Date.now()) / 86_400_000)) : 0;
+  return { paid, until: bot.hosting_until, period: (bot.hosting ?? null) as "month" | "year" | "trial" | null, daysLeft, trial: paid && bot.hosting === "trial" };
+}
+
+export function toBotView(bot: BotRow) {
   let modules: ModuleConfig = {};
   try {
     modules = JSON.parse(bot.modules);
@@ -48,7 +55,8 @@ export function toBotView(bot: BotRow, canHost: boolean) {
     info = bot.runtime_info ? JSON.parse(bot.runtime_info) : null;
   } catch {}
 
-  const wanted = canHost && bot.status === "online";
+  const payment = botPayment(bot);
+  const wanted = payment.paid && bot.status === "online";
   const fresh = !!bot.heartbeat_at && Date.now() - bot.heartbeat_at < HEARTBEAT_STALE_MS;
   const runtime: RuntimeState =
     bot.runtime_status === "error"
@@ -74,6 +82,8 @@ export function toBotView(bot: BotRow, canHost: boolean) {
     runtimeError: bot.runtime_error,
     info: runtime === "online" ? info : null,
     online: runtime === "online",
+    payment,
+    showcase: bot.showcase === 1,
     inviteUrl: inviteUrl(bot.client_id),
     createdAt: bot.created_at,
   };
@@ -93,5 +103,5 @@ export function toServerView(row: ServerRow) {
   try {
     modules = JSON.parse(row.modules);
   } catch {}
-  return { id: row.id, guildId: row.guild_id, name: row.name, icon: row.icon, modules, createdAt: row.created_at };
+  return { id: row.id, guildId: row.guild_id, name: row.name, icon: row.icon, modules, showcase: row.showcase === 1, createdAt: row.created_at };
 }

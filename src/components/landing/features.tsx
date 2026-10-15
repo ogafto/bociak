@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
-import { Check, ChevronDown, Hash } from "lucide-react";
+import { Check, ChevronDown, Hash, Sparkles } from "lucide-react";
 import { MESSAGE_KINDS } from "@/lib/message";
 import { CV2Preview } from "@/components/ui/cv2-preview";
 import { ModuleIcon } from "@/components/ui/module-icon";
@@ -16,10 +16,10 @@ export function Features() {
   return (
     <section id="funkcje" className="scroll-mt-20 py-24 sm:py-32">
       <div className={CONTAINER}>
-        <SectionIntro label="Co robi Bociak" title="Mniej klikania w Discordzie." muted="Więcej czasu na społeczność." />
+        <SectionIntro icon={Sparkles} label="Co robi Bociak" title="Mniej klikania w Discordzie." muted="Więcej czasu na społeczność." />
         <div className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-3">
           <FeatureCard delay={0} title="Ustawiasz w panelu" text="Kanały i role wybierasz z listy. Bez komend, bez kopiowania ID i bez szukania w ustawieniach Discorda." visual={<SettingsScene />} />
-          <FeatureCard delay={0.08} title="Wygląda tak, jak chcesz" text="Gotowe style wiadomości i kolory za darmo, pełny kreator w Pro. Podgląd widzisz, zanim zapiszesz." visual={<StyleScene />} />
+          <FeatureCard delay={0.08} title="Wygląda tak, jak chcesz" text="Gotowe style wiadomości i kolory za darmo, pełny kreator w Bocie Pro. Podgląd widzisz, zanim zapiszesz." visual={<StyleScene />} />
           <FeatureCard delay={0.16} title="Działa 24/7" text="Bociak pracuje na naszych serwerach. Nie musisz mieć włączonego komputera ani płacić za hosting." visual={<LiveScene />} />
         </div>
       </div>

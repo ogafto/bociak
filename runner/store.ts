@@ -2,7 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { createDecipheriv, createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
-import { MODULES, getPlan } from "../src/lib/catalog.ts";
+import { FREE_LIMITS, MODULES, getPlan } from "../src/lib/catalog.ts";
 import { SHARED_BOT_ID, migrate } from "../src/lib/schema.ts";
 import type { GuildSnapshot } from "../src/lib/guild.ts";
 import { toFreeTemplate } from "../src/lib/message.ts";
@@ -53,9 +53,14 @@ export function activePlan(plan: string, until: string | null) {
   return getPlan(plan);
 }
 
-/** Czy bot powinien teraz działać: włączony przez klienta, z tokenem i z pakietem, który daje własnego bota (hosting w cenie). */
+/** Bot Pro jest opłacany osobno – działa do daty w hosting_until (opłata albo okres próbny). */
+export function isPaid(bot: Pick<BotRecord, "hosting_until">) {
+  return !!bot.hosting_until && new Date(bot.hosting_until).getTime() > Date.now();
+}
+
+/** Czy bot powinien teraz działać: włączony przez klienta, z tokenem i opłacony. */
 export function shouldRun(bot: BotRecord) {
-  return bot.status === "online" && !!bot.token_enc && activePlan(bot.owner_plan, bot.owner_plan_until).maxBots > 0;
+  return bot.status === "online" && !!bot.token_enc && isPaid(bot);
 }
 
 /**
@@ -68,11 +73,19 @@ export function filterByPlan(settings: ModuleSettings, plan: ReturnType<typeof g
     const mod = MODULES.find((m) => m.id === id);
     if (!mod || mod.soon || (mod.premium && !plan.premiumModules)) continue;
     if (Object.keys(out).length >= plan.maxModules) break;
-    // bez Pro: wiadomości tylko w gotowych stylach (kolor paska zostaje)
+    // bez Pro: wiadomości tylko w gotowych stylach (kolor paska zostaje) i limity w modułach-listach
     const sanitized = { ...cfg };
     if (!plan.premiumModules) {
       for (const f of mod.fields ?? []) {
         if (f.type === "message" && f.message) sanitized[f.key] = JSON.stringify(toFreeTemplate(cfg[f.key], f.message));
+      }
+      const limit = FREE_LIMITS[id];
+      if (limit && sanitized[limit.field]) {
+        sanitized[limit.field] = sanitized[limit.field]
+          .split("\n")
+          .filter((l) => l.trim())
+          .slice(0, limit.max)
+          .join("\n");
       }
     }
     out[id] = sanitized;
@@ -113,13 +126,8 @@ export function linkServer(code: string, guild: { id: string; name: string; icon
     | undefined;
   if (!row || row.expires_at < Date.now()) return { ok: false, error: "Kod jest nieprawidłowy albo wygasł. Wygeneruj nowy w panelu." };
 
-  const owner = db.prepare("SELECT plan, plan_until FROM users WHERE id = ?").get(row.user_id) as { plan: string; plan_until: string | null };
-  const plan = activePlan(owner.plan, owner.plan_until);
+  // darmowy Bociak działa bez limitu serwerów
   const existing = db.prepare("SELECT user_id FROM servers WHERE guild_id = ?").get(guild.id) as { user_id: string } | undefined;
-  const count = (db.prepare("SELECT COUNT(*) AS n FROM servers WHERE user_id = ?").get(row.user_id) as { n: number }).n;
-  if (existing?.user_id !== row.user_id && count >= plan.maxServers) {
-    return { ok: false, error: `Pakiet ${plan.name} pozwala na ${plan.maxServers} serwery. Odłącz któryś w panelu albo przejdź na Pro.` };
-  }
 
   db.prepare("DELETE FROM link_codes WHERE code = ?").run(code.trim().toUpperCase());
   if (existing) {

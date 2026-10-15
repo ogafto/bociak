@@ -29,7 +29,7 @@ export default async function AccountPage() {
               <div className="truncate text-sm text-white/55">{user.email}</div>
             </div>
             <Link href="/panel/pakiety" className={btn("secondary", "sm")}>
-              <Crown className="size-3.5 text-amber-300" /> Pakiet {user.plan.name}
+              <Crown className="size-3.5 text-amber-300" /> Płatności
             </Link>
           </div>
         </div>

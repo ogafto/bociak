@@ -383,11 +383,11 @@ function MessageDesigner({
                 </span>
                 <h3 className="relative mt-3 text-[1.3rem] font-medium tracking-[-0.02em] text-white">Własny wygląd od zera</h3>
                 <p className="relative mt-1.5 max-w-md text-[14px] leading-relaxed text-white/65">
-                  W Pro układasz wiadomość z bloków: własne teksty ze zmiennymi, obrazki i GIF-y, miniatury, separatory i przyciski z linkami. W
-                  pakiecie Darmowym wybierasz gotowy styl i kolor paska.
+                  W Bocie Pro układasz wiadomość z bloków: własne teksty ze zmiennymi, obrazki i GIF-y, miniatury, separatory i przyciski z linkami. W
+                  darmowym Bociaku wybierasz gotowy styl i kolor paska.
                 </p>
-                <Link href="/panel/pakiety" className={btn("primary", "sm", "relative mt-5")}>
-                  <Crown className="size-3.5" /> Odblokuj w Pro
+                <Link href="/panel/boty" className={btn("primary", "sm", "relative mt-5")}>
+                  <Crown className="size-3.5" /> Odblokuj w Bocie Pro
                 </Link>
               </div>
             )}

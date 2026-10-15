@@ -61,9 +61,9 @@ export function BotCard({ bot }: { bot: BotView }) {
 
       <div className="relative mt-5 flex items-center justify-between border-t border-white/[0.05] pt-4">
         <StatusBadge state={bot.runtime} />
-        <span className="flex items-center gap-1.5 text-[12px] text-white/40">
+        <span className={`flex items-center gap-1.5 text-[12px] ${bot.payment.paid ? "text-white/45" : "text-amber-300"}`}>
           <Server className="size-3.5" />
-          {bot.info ? `${bot.info.guilds} serwerów` : "Hosting w cenie"}
+          {bot.payment.paid ? (bot.payment.trial ? `Próba · ${bot.payment.daysLeft} dni` : `Opłacony · ${bot.payment.daysLeft} dni`) : "Nieopłacony"}
         </span>
       </div>
     </Link>

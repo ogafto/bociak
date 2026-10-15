@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Reveal, Words } from "./motion";
 
@@ -7,22 +7,24 @@ import { Reveal, Words } from "./motion";
 
 export const CONTAINER = "mx-auto w-full max-w-[1140px] px-5 sm:px-8";
 
-/** Mała etykieta nad nagłówkiem: kreska w kolorze marki i tekst wersalikami. */
-export function Label({ children }: { children: ReactNode }) {
+/** Etykieta sekcji: pigułka z ikoną w kółku i krótką nazwą. */
+export function Label({ children, icon: Icon }: { children: ReactNode; icon?: LucideIcon }) {
   return (
-    <div className="inline-flex items-center gap-2 text-[11.5px] font-medium uppercase tracking-[0.12em] text-brand-300">
-      <span className="h-[5px] w-3 rounded-full bg-brand-400 shadow-[0_0_10px_rgb(138_147_255/0.8)]" />
+    <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-[linear-gradient(180deg,rgb(255_255_255/0.05),rgb(255_255_255/0.015))] py-1 pl-1 pr-3.5 text-[13px] font-medium text-white/80 shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]">
+      <span className="grid size-6 place-items-center rounded-full bg-brand-500/20 text-brand-300 ring-1 ring-inset ring-brand-400/30">
+        {Icon ? <Icon className="size-3.5" strokeWidth={2.2} /> : <span className="size-1.5 rounded-full bg-brand-300 shadow-[0_0_8px_rgb(181_187_255/0.9)]" />}
+      </span>
       {children}
     </div>
   );
 }
 
 /** Nagłówek sekcji: pierwsza linia biała, druga przygaszona; słowa wjeżdżają po kolei. */
-export function SectionIntro({ label, title, muted, children, center = false, className = "" }: { label: string; title: string; muted?: string; children?: ReactNode; center?: boolean; className?: string }) {
+export function SectionIntro({ label, icon, title, muted, children, center = false, className = "" }: { label: string; icon?: LucideIcon; title: string; muted?: string; children?: ReactNode; center?: boolean; className?: string }) {
   return (
     <div className={`${center ? "mx-auto max-w-3xl text-center" : "max-w-3xl"} ${className}`}>
       <Reveal y={10}>
-        <Label>{label}</Label>
+        <Label icon={icon}>{label}</Label>
       </Reveal>
       <h2 className="mt-5 text-balance text-[2.3rem] font-medium leading-[1.04] tracking-[-0.045em] text-white sm:text-[3.2rem]">
         <Words text={title} />

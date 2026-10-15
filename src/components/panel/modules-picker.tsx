@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { ChevronRight, Crown, Lock, Settings2, X } from "lucide-react";
-import { MODULES, MODULE_CATEGORIES, type BotModule, type ModuleCategory, type ModuleField } from "@/lib/catalog";
+import { FREE_LIMITS, MODULES, MODULE_CATEGORIES, type BotModule, type ModuleCategory, type ModuleField } from "@/lib/catalog";
 import { ModuleIcon } from "@/components/ui/module-icon";
 import { btn } from "@/components/ui/button";
 import type { GuildSnapshot } from "@/lib/guild";
@@ -94,8 +94,8 @@ export function ModulesPicker({
             </span>
           )}
           {(!plan.premiumModules || limitReached) && (
-            <Link href="/panel/pakiety" className="flex items-center gap-1 font-medium text-dc-yellow hover:opacity-80">
-              <Crown className="size-3.5" /> Więcej w Pro
+            <Link href="/panel/boty" className="flex items-center gap-1 font-medium text-dc-yellow hover:opacity-80">
+              <Crown className="size-3.5" /> Wszystko w Bocie Pro
             </Link>
           )}
         </div>
@@ -280,7 +280,7 @@ function ModuleSheet({
                   <div className="text-[13px] text-white/45">
                     {status.disabled && !status.on
                       ? status.reason === "PRO"
-                        ? "Ten moduł jest w pakiecie Pro."
+                        ? "Ten moduł działa na Bocie Pro – Twoim własnym bocie."
                         : status.reason === "Limit"
                           ? "Osiągnięto limit modułów w Twoim pakiecie."
                           : "Pracujemy nad nim – będzie wkrótce."
@@ -289,8 +289,8 @@ function ModuleSheet({
                 </div>
                 {status.disabled && !status.on ? (
                   status.reason !== "Wkrótce" && (
-                    <Link href="/panel/pakiety" className={btn("primary", "sm")}>
-                      <Crown className="size-3.5" /> Pro
+                    <Link href="/panel/boty" className={btn("primary", "sm")}>
+                      <Crown className="size-3.5" /> Bot Pro
                     </Link>
                   )
                 ) : (
@@ -303,6 +303,7 @@ function ModuleSheet({
                   <motion.div key={f.key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.06, duration: 0.4 }}>
                     <label className="label">{f.label}</label>
                     <FieldInput field={f} value={settings[f.key] ?? ""} onChange={(v) => onField(f.key, v)} guilds={guilds} bot={bot} fullEditor={fullEditor} />
+                    {!fullEditor && FREE_LIMITS[m.id]?.field === f.key && <LineLimit value={settings[f.key] ?? ""} limit={FREE_LIMITS[m.id]} />}
                   </motion.div>
                 ))}
               {status.on && !m.fields?.length && <p className="text-sm text-white/45">Ten moduł nie wymaga ustawień – działa od razu po włączeniu.</p>}
@@ -318,6 +319,25 @@ function ModuleSheet({
       )}
     </AnimatePresence>,
     document.body,
+  );
+}
+
+/** Licznik linii w modułach-listach darmowego Bociaka (np. 3/5 komend). */
+function LineLimit({ value, limit }: { value: string; limit: { max: number; label: string } }) {
+  const used = value.split("\n").filter((l) => l.trim()).length;
+  const over = used > limit.max;
+  return (
+    <div className={`mt-2 flex items-center justify-between text-[12.5px] ${over ? "text-rose-300" : "text-white/45"}`}>
+      <span>
+        {used} / {limit.max} {limit.label}
+        {over && " – usuń nadmiar albo przejdź na Bota Pro"}
+      </span>
+      <span className="flex gap-0.5">
+        {Array.from({ length: limit.max }, (_, i) => (
+          <span key={i} className={`h-1.5 w-3 rounded-full ${i < used ? (over ? "bg-rose-400" : "bg-brand-400") : "bg-white/10"}`} />
+        ))}
+      </span>
+    </div>
   );
 }
 

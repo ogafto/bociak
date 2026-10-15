@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight, PartyPopper } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { countServers, recentServers } from "@/lib/db";
+import { recentServers } from "@/lib/db";
 import { sharedInviteUrl, toServerView } from "@/lib/bots";
 import { btn } from "@/components/ui/button";
 import { PageHeader } from "@/components/panel/page-header";
@@ -15,7 +14,6 @@ export const metadata: Metadata = { title: "Dodaj serwer" };
 export default async function AddServerPage() {
   const user = await requireUser();
   const fresh = recentServers(user.id).map(toServerView);
-  if (countServers(user.id) >= user.plan.maxServers && fresh.length === 0) redirect("/panel/pakiety?limit=1");
 
   return (
     <div className="space-y-6">

@@ -4,45 +4,75 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser, type CurrentUser } from "@/lib/auth";
-import { BOT_COLORS, getModule, PLANS, type PlanId } from "@/lib/catalog";
+import { BOT_COLORS, FREE_LIMITS, FREE_RULES, PLANS, PRO_RULES, PRO_TRIAL_DAYS, getModule } from "@/lib/catalog";
 import * as db from "@/lib/db";
 import { encryptSecret } from "@/lib/secrets";
 import { toFreeTemplate, type MessageTemplate } from "@/lib/message";
+import { botPayment } from "@/lib/bots";
 
 export type FormState = { error?: string; success?: string };
 
-const DAYS_30 = 30 * 24 * 60 * 60 * 1000;
+const DAY = 24 * 60 * 60 * 1000;
+const MAX_BOTS_PER_ACCOUNT = 10; // zabezpieczenie przed spamem – więcej w Enterprise
 
 // ---------- płatności (symulacja) ----------
-// Tu w przyszłości: utworzenie sesji Stripe / Przelewy24 i aktywacja w webhooku.
+// Tu w przyszłości: utworzenie sesji Stripe / PayU (BLIK) i aktywacja w webhooku.
 async function chargeCustomer(user: CurrentUser, amount: number, description: string) {
   console.info(`[płatność demo] ${user.email}: ${description} – ${amount} zł`);
   return { ok: true as const };
 }
 
-export async function buyPlan(planId: PlanId) {
+/** Opłata Bota Pro za miesiąc albo rok. Kolejny okres liczy się od końca obecnego. */
+export async function buyBotAction(botId: string, period: "month" | "year") {
   const user = await requireUser();
-  const plan = PLANS.find((p) => p.id === planId);
-  if (!plan || plan.price === null) return; // Enterprise wyceniamy indywidualnie na Discordzie
+  const bot = db.getBot(user.id, botId);
+  if (!bot) return;
+  const pro = PLANS.find((p) => p.id === "pro")!;
+  const amount = period === "year" ? pro.yearlyPrice! : pro.price!;
+  const payment = await chargeCustomer(user, amount, `Bot Pro „${bot.name}” – ${period === "year" ? "rok" : "miesiąc"}`);
+  if (!payment.ok) return;
 
-  if (plan.price === 0) {
-    db.setUserPlan(user.id, "start", null);
-  } else {
-    const payment = await chargeCustomer(user, plan.price, `Pakiet ${plan.name}`);
-    if (!payment.ok) return;
-    // Przedłużenie liczymy od końca obecnego okresu, jeśli to ten sam pakiet.
-    const base =
-      user.plan.id === plan.id && user.planUntil ? Math.max(Date.now(), new Date(user.planUntil).getTime()) : Date.now();
-    db.setUserPlan(user.id, plan.id, new Date(base + DAYS_30).toISOString());
-    db.createOrder({ user_id: user.id, kind: "plan", item: plan.id, bot_id: null, amount: plan.price });
-  }
+  const current = botPayment(bot);
+  const base = current.paid && current.until ? new Date(current.until).getTime() : Date.now();
+  const until = new Date(base + (period === "year" ? 365 : 30) * DAY).toISOString();
+  db.setBotPaid(user.id, botId, period, until);
+  db.createOrder({ user_id: user.id, kind: "bot", item: period, bot_id: botId, amount });
   revalidatePath("/panel", "layout");
-  redirect("/panel/pakiety?kupiono=" + plan.id);
+  redirect(`/panel/boty/${botId}?oplacono=1`);
+}
+
+/** Okres próbny Bota Pro – raz na konto, tylko dla nieopłaconego bota. */
+export async function startTrialAction(botId: string): Promise<FormState> {
+  const user = await requireUser();
+  const bot = db.getBot(user.id, botId);
+  if (!bot) return { error: "Nie znaleziono bota." };
+  if (user.trialUsed) return { error: "Okres próbny został już wykorzystany na tym koncie." };
+  if (botPayment(bot).paid) return { error: "Ten bot jest już opłacony." };
+  db.setBotPaid(user.id, botId, "trial", new Date(Date.now() + PRO_TRIAL_DAYS * DAY).toISOString());
+  db.markTrialUsed(user.id);
+  revalidatePath("/panel", "layout");
+  redirect(`/panel/boty/${botId}?proba=1`);
+}
+
+// ---------- strona główna: zgoda na pokazanie serwera ----------
+
+export async function setServerShowcaseAction(serverId: string, on: boolean) {
+  const user = await requireUser();
+  db.setServerShowcase(user.id, serverId, on);
+  revalidatePath("/panel", "layout");
+  revalidatePath("/");
+}
+
+export async function setBotShowcaseAction(botId: string, on: boolean) {
+  const user = await requireUser();
+  db.setBotShowcase(user.id, botId, on);
+  revalidatePath("/panel", "layout");
+  revalidatePath("/");
 }
 
 // ---------- boty ----------
 
-function parseModules(raw: string, user: CurrentUser): { modules?: db.ModuleConfig; error?: string } {
+function parseModules(raw: string, rules: { premiumModules: boolean }): { modules?: db.ModuleConfig; error?: string } {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw || "{}");
@@ -56,8 +86,8 @@ function parseModules(raw: string, user: CurrentUser): { modules?: db.ModuleConf
     const mod = getModule(id);
     if (!mod) continue;
     if (mod.soon) return { error: `Moduł „${mod.name}” będzie dostępny wkrótce.` };
-    if (mod.premium && !user.plan.premiumModules) {
-      return { error: `Moduł „${mod.name}” wymaga pakietu Pro.` };
+    if (mod.premium && !rules.premiumModules) {
+      return { error: `Moduł „${mod.name}” działa na Bocie Pro.` };
     }
     const clean: Record<string, string> = {};
     for (const field of mod.fields ?? []) {
@@ -71,13 +101,16 @@ function parseModules(raw: string, user: CurrentUser): { modules?: db.ModuleConf
         } catch {}
         if (!template) continue;
         // bez Pro zapisujemy tylko gotowy styl – własny wzór zamieniamy na domyślny, kolor zostaje
-        clean[field.key] = user.plan.premiumModules ? v : JSON.stringify(toFreeTemplate(v, field.message));
+        clean[field.key] = rules.premiumModules ? v : JSON.stringify(toFreeTemplate(v, field.message));
       } else clean[field.key] = v.slice(0, 4000);
     }
+    // darmowy Bociak: limit linii w modułach-listach (komendy, autoodpowiedzi)
+    const limit = FREE_LIMITS[id];
+    if (!rules.premiumModules && limit) {
+      const lines = (clean[limit.field] ?? "").split("\n").filter((l) => l.trim()).length;
+      if (lines > limit.max) return { error: `Darmowy Bociak obsługuje do ${limit.max} ${limit.label}. Usuń nadmiar albo przejdź na Bota Pro.` };
+    }
     modules[id] = clean;
-  }
-  if (Object.keys(modules).length > user.plan.maxModules) {
-    return { error: `Pakiet ${user.plan.name} pozwala na maks. ${user.plan.maxModules} modułów. Wyłącz któryś albo przejdź na Pro.` };
   }
   return { modules };
 }
@@ -103,16 +136,14 @@ function validateBot(f: ReturnType<typeof readBotForm>): string | undefined {
 
 export async function createBotAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireUser();
-  if (db.countBots(user.id) >= user.plan.maxBots) {
-    return {
-      error: user.plan.maxBots === 0 ? "Własny bot jest dostępny w pakiecie Pro." : `Osiągnięto limit botów w pakiecie ${user.plan.name}.`,
-    };
+  if (db.countBots(user.id) >= MAX_BOTS_PER_ACCOUNT) {
+    return { error: `Na jednym koncie możesz mieć do ${MAX_BOTS_PER_ACCOUNT} botów. Potrzebujesz więcej? Napisz do nas (Enterprise).` };
   }
 
   const f = readBotForm(formData);
   const invalid = validateBot(f);
   if (invalid) return { error: invalid };
-  const { modules, error } = parseModules(f.modulesRaw, user);
+  const { modules, error } = parseModules(f.modulesRaw, PRO_RULES);
   if (error) return { error };
 
   const id = db.createBot(user.id, {
@@ -136,7 +167,7 @@ export async function updateBotAction(botId: string, _prev: FormState, formData:
   const f = readBotForm(formData);
   const invalid = validateBot(f);
   if (invalid) return { error: invalid };
-  const { modules, error } = parseModules(f.modulesRaw, user);
+  const { modules, error } = parseModules(f.modulesRaw, PRO_RULES);
   if (error) return { error };
 
   db.updateBot(user.id, botId, {
@@ -168,7 +199,7 @@ export async function toggleBotAction(botId: string): Promise<FormState> {
   if (bot.status === "online") {
     db.updateBot(user.id, botId, { status: "offline" });
   } else {
-    if (user.plan.maxBots === 0) return { error: "Własny bot działa w pakiecie Pro – hosting jest w cenie." };
+    if (!botPayment(bot).paid) return { error: "Opłać bota albo włącz okres próbny, żeby go uruchomić." };
     if (!bot.token_enc) return { error: "Dodaj token bota, aby go uruchomić." };
     // Runner (npm run runner) zauważy zmianę w ciągu kilku sekund i zaloguje bota do Discorda.
     db.requestStart(user.id, botId);
@@ -187,7 +218,7 @@ export async function generateLinkCodeAction(): Promise<{ code: string; expiresA
 export async function saveServerModulesAction(serverId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireUser();
   if (!db.getServer(user.id, serverId)) return { error: "Nie znaleziono serwera." };
-  const { modules, error } = parseModules(String(formData.get("modules") ?? "{}"), user);
+  const { modules, error } = parseModules(String(formData.get("modules") ?? "{}"), FREE_RULES);
   if (error) return { error };
   db.updateServerModules(user.id, serverId, JSON.stringify(modules));
   revalidatePath("/panel", "layout");

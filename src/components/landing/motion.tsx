@@ -1,7 +1,7 @@
 "use client";
 
-import { animate, motion, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { useEffect, useState, type ReactNode } from "react";
+import { animate, motion, useInView, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -105,16 +105,22 @@ export function Enter({ children, delay = 0, y = 16, className = "" }: { childre
   );
 }
 
-/** Licznik, który „nabija się” do wartości po pojawieniu się na ekranie. */
+/** Licznik, który „nabija się” do wartości, gdy pojawi się na ekranie. */
 export function CountUp({ to, className = "" }: { to: number; className?: string }) {
   const reduce = useReducedMotion();
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
   const [n, setN] = useState(reduce ? to : 0);
   useEffect(() => {
-    if (reduce) return;
-    const controls = animate(0, to, { duration: 1.2, ease: EASE, onUpdate: (v) => setN(Math.round(v)) });
+    if (reduce || !inView) return;
+    const controls = animate(0, to, { duration: 1.4, ease: EASE, onUpdate: (v) => setN(Math.round(v)) });
     return () => controls.stop();
-  }, [to, reduce]);
-  return <span className={className}>{n.toLocaleString("pl-PL")}</span>;
+  }, [to, reduce, inView]);
+  return (
+    <span ref={ref} className={`tabular-nums ${className}`}>
+      {n.toLocaleString("pl-PL")}
+    </span>
+  );
 }
 
 /** Pasek postępu, który wypełnia się płynnie. */

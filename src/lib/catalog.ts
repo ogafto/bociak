@@ -19,17 +19,31 @@ export const BRAND = {
 
 export type PlanId = "start" | "pro" | "enterprise";
 
+// Model cenowy:
+// - Darmowy: wspólny bot Bociak na dowolnej liczbie serwerów, podstawowe moduły (z limitami w środku),
+//   gotowe style wiadomości i mały podpis „Bociak · bociak.pl”.
+// - Bot Pro: płatny osobno za KAŻDEGO własnego bota (miesięcznie albo rocznie), pierwszy z okresem próbnym.
+// - Enterprise: wycena indywidualna.
 export type Plan = {
   id: PlanId;
   name: string;
-  price: number | null; // zł / miesiąc; null = wycena indywidualna
+  price: number | null; // zł / miesiąc (za bota w Pro); null = wycena indywidualna
+  yearlyPrice?: number; // zł / rok (za bota)
   description: string;
-  maxServers: number; // serwery ze wspólnym botem Bociak; Infinity = bez limitu
-  maxBots: number; // własne boty klienta (token z Developer Portal), hosting w cenie
+  maxServers: number; // Infinity = bez limitu
+  maxBots: number; // ile botów obejmuje JEDEN pakiet (w Pro: 1 – kolejny bot to kolejny pakiet)
   maxModules: number; // na serwer / bota; Infinity = bez limitu
   premiumModules: boolean;
   features: string[];
   highlighted?: boolean;
+};
+
+export const PRO_TRIAL_DAYS = 7;
+
+/** Limity w modułach darmowego Bociaka (liczba linii w polach-listach). */
+export const FREE_LIMITS: Record<string, { field: string; max: number; label: string }> = {
+  commands: { field: "list", max: 5, label: "własnych komend" },
+  autoresponder: { field: "list", max: 5, label: "autoodpowiedzi" },
 };
 
 export const PLANS: Plan[] = [
@@ -37,57 +51,62 @@ export const PLANS: Plan[] = [
     id: "start",
     name: "Darmowy",
     price: 0,
-    description: "Bot Bociak na Twoim serwerze.",
-    maxServers: 3,
+    description: "Bot Bociak na Twoich serwerach.",
+    maxServers: Infinity,
     maxBots: 0,
-    maxModules: 5,
+    maxModules: Infinity,
     premiumModules: false,
     features: [
-      "Bot Bociak – nasza nazwa i logo",
-      "Do 3 serwerów",
-      "Do 5 modułów na serwer",
-      "Darmowe moduły (moderacja, tickety, powitania…)",
+      "Bot Bociak – bez tokenu i Developer Portalu",
+      "Bez limitu serwerów",
+      "Wszystkie podstawowe moduły",
+      "Do 5 własnych komend i 5 autoodpowiedzi",
       "Gotowe style wiadomości i kolory",
-      "Bez tokenu i Developer Portalu",
+      "Mały podpis „Bociak” pod wiadomościami",
     ],
   },
   {
     id: "pro",
-    name: "Pro",
+    name: "Bot Pro",
     price: 9.99,
-    description: "Twój własny bot, hosting w cenie.",
+    yearlyPrice: 99,
+    description: "Twój własny bot – płacisz za każdego bota osobno.",
     maxServers: Infinity,
     maxBots: 1,
     maxModules: Infinity,
     premiumModules: true,
     highlighted: true,
     features: [
-      "Własny bot: Twoja nazwa, avatar i status",
-      "Hosting 24/7 w cenie",
-      "Wszystkie moduły, także PRO",
-      "Pełny kreator wyglądu wiadomości",
-      "Bociak bez limitu serwerów",
-      "Priorytetowe wsparcie",
+      "Twoja nazwa, avatar i status",
+      "Wszystkie moduły, także Pro",
+      "Bez limitów w modułach",
+      "Pełny kreator wiadomości, bez podpisu",
+      "Hosting 24/7 w cenie, bez limitu serwerów",
+      `${PRO_TRIAL_DAYS} dni za darmo na start`,
     ],
   },
   {
     id: "enterprise",
     name: "Enterprise",
     price: null,
-    description: "Coś szytego na miarę.",
+    description: "Sieci serwerów, firmy i funkcje na zamówienie.",
     maxServers: Infinity,
-    maxBots: 10,
+    maxBots: Infinity,
     maxModules: Infinity,
     premiumModules: true,
     features: [
-      "Kilka własnych botów",
+      "Wiele botów na jednej fakturze",
       "Funkcje robione na zamówienie",
       "Dedykowane zasoby serwera",
-      "Indywidualne warunki i faktura",
+      "Pomoc przy weryfikacji bota w Discordzie",
       "Kontakt bezpośrednio na Discordzie",
     ],
   },
 ];
+
+/** Zasady darmowego Bociaka i opłaconego Bota Pro – w postaci dla panelu i runnera. */
+export const FREE_RULES = { premiumModules: false, maxModules: null } as const;
+export const PRO_RULES = { premiumModules: true, maxModules: null } as const;
 
 export type ModuleField = {
   key: string;
@@ -188,5 +207,5 @@ export function getModule(id: string): BotModule | undefined {
 export function formatPrice(price: number | null) {
   if (price === null) return "Indywidualnie";
   if (price === 0) return "0 zł";
-  return `${price.toFixed(2).replace(".", ",")} zł`;
+  return `${price.toFixed(2).replace(".", ",").replace(/,00$/, "")} zł`;
 }

@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Route } from "lucide-react";
 import { BociakGlyph } from "@/components/ui/logo";
 import { ModuleIcon } from "@/components/ui/module-icon";
 import { Reveal } from "./motion";
@@ -20,7 +20,7 @@ export function HowItWorks() {
   return (
     <section id="jak-to-dziala" className="scroll-mt-20 py-24 sm:py-32">
       <div className={CONTAINER}>
-        <SectionIntro center label="Jak to działa" title="Od zera do działającego bota" muted="w dwie minuty." />
+        <SectionIntro center icon={Route} label="Jak to działa" title="Od zera do działającego bota" muted="w dwie minuty." />
         <div className="mx-auto mt-14 grid max-w-[1000px] grid-cols-1 gap-4 md:grid-cols-3 md:pb-14">
           {STEPS.map((s, i) => (
             <Reveal key={s.title} delay={i * 0.1} tilt className={i === 1 ? "md:translate-y-14" : ""}>

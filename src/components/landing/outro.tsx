@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { MessageCircleQuestion, Plus } from "lucide-react";
 import { BRAND } from "@/lib/catalog";
 import { Logo } from "@/components/ui/logo";
 import { Curtain } from "./curtain";
@@ -8,24 +8,27 @@ import { Button, CONTAINER, Card, SectionIntro } from "./ui";
 
 const FAQ = [
   {
-    q: "Czym różni się Darmowy od Pro?",
-    a: "W Darmowym dodajesz na serwer naszego bota Bociak, z darmowymi modułami i gotowymi stylami wiadomości, na maks. 3 serwerach. W Pro masz własnego bota z Twoją nazwą, avatarem i statusem, wszystkie moduły i pełny kreator wyglądu.",
+    q: "Czym różni się Darmowy od Bota Pro?",
+    a: "W Darmowym dodajesz na serwer naszego bota Bociak – na dowolną liczbę serwerów, z podstawowymi modułami i gotowymi stylami wiadomości. Bot Pro to Twój własny bot: Twoja nazwa, avatar i status, wszystkie moduły bez limitów, pełny kreator wiadomości i brak podpisu Bociaka.",
   },
-  { q: "Czy hosting jest osobno płatny?", a: "Nie. Darmowy Bociak działa na naszych serwerach, a w Pro hosting Twojego bota 24/7 jest wliczony w cenę." },
-  { q: "Czy muszę umieć programować?", a: "Nie. Wszystko wyklikasz w panelu: włączasz moduły, wybierasz kanały z listy i zapisujesz." },
   {
-    q: "Czy potrzebuję tokenu bota?",
-    a: "W Darmowym nie. Klikasz „Dodaj Bociaka” i łączysz serwer komendą /polacz. Token jest potrzebny tylko w Pro, bo wtedy to Twój własny bot. Przechowujemy go zaszyfrowanego.",
+    q: "Ile kosztuje kilka botów?",
+    a: "Każdy własny bot to osobny pakiet: 9,99 zł miesięcznie albo 99 zł za rok. Jeden bot może działać na dowolnej liczbie serwerów, więc większości osób wystarcza jeden.",
   },
-  { q: "Czy mogę zrezygnować w każdej chwili?", a: "Tak. Płacisz miesięcznie, bez umów. Jeśli nie przedłużysz Pro, konto wraca do Darmowego, a konfiguracja zostaje zapisana." },
-  { q: "Co, jeśli zabraknie mi jakiejś funkcji?", a: "Napisz do nas na Discordzie. Nowe moduły dodajemy regularnie, a w Enterprise robimy funkcje na zamówienie." },
+  { q: "Czy mogę najpierw wypróbować Bota Pro?", a: "Tak. Pierwszy Bot Pro na koncie ma 7 dni za darmo – bez podawania karty. Po tym czasie opłacasz go albo bot się wyłącza." },
+  { q: "Czy hosting jest osobno płatny?", a: "Nie. Darmowy Bociak działa na naszych serwerach, a hosting każdego Bota Pro 24/7 jest wliczony w jego cenę." },
+  {
+    q: "Czy muszę umieć programować?",
+    a: "Nie. Wszystko wyklikasz w panelu: włączasz moduły, wybierasz kanały z listy i zapisujesz. Do Bota Pro potrzebny jest tylko token z Discord Developer Portal – prowadzimy krok po kroku, a token przechowujemy zaszyfrowany.",
+  },
+  { q: "Czy mogę zrezygnować w każdej chwili?", a: "Tak. Płacisz za bota, bez umów. Gdy go nie przedłużysz, bot się wyłączy, a jego konfiguracja zostanie zapisana – wrócisz, kiedy zechcesz." },
 ];
 
 export function Faq() {
   return (
     <section id="faq" className="scroll-mt-20 py-24 sm:py-32">
       <div className={CONTAINER}>
-        <SectionIntro label="FAQ" title="Masz pytania?" muted="Mamy odpowiedzi." />
+        <SectionIntro icon={MessageCircleQuestion} label="FAQ" title="Masz pytania?" muted="Mamy odpowiedzi." />
         <Reveal className="mt-14 grid grid-cols-1 items-start gap-3 md:grid-cols-2">
           {FAQ.map((item) => (
             <details key={item.q} className="group rounded-2xl border border-white/[0.06] bg-[#111113] transition-colors open:bg-[#141416]">

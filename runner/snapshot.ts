@@ -31,6 +31,7 @@ export function buildSnapshot(guild: Guild): GuildSnapshot {
       .map((r) => ({ id: r.id, name: r.name, color: r.hexColor, position: r.position, managed: r.managed })),
     botRolePosition: me?.roles.highest.position ?? 0,
     botPermissions: (me?.permissions.bitfield ?? 0n).toString(),
+    memberCount: guild.memberCount,
     updatedAt: Date.now(),
   };
 }

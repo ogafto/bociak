@@ -65,16 +65,16 @@ export function ServerCard({ server }: { server: ServerView }) {
 }
 
 /** Kafelek „dodaj serwer” na końcu siatki. */
-export function AddServerTile({ disabled = false }: { disabled?: boolean }) {
+export function AddServerTile() {
   return (
     <Link
-      href={disabled ? "/panel/pakiety" : "/panel/serwery/dodaj"}
+      href="/panel/serwery/dodaj"
       className="group flex min-h-[148px] flex-col items-center justify-center gap-3 rounded-[16px] border border-dashed border-white/[0.12] p-5 text-center transition-colors hover:border-brand-400/50 hover:bg-brand-500/[0.04]"
     >
       <span className="grid size-11 place-items-center rounded-full border border-white/[0.1] bg-white/[0.03] text-white/60 transition-all duration-300 group-hover:scale-110 group-hover:border-brand-400/50 group-hover:text-brand-300">
         <Plus className="size-5" />
       </span>
-      <span className="text-[14px] text-white/60 group-hover:text-white">{disabled ? "Więcej serwerów w Pro" : "Dodaj serwer"}</span>
+      <span className="text-[14px] text-white/60 group-hover:text-white">Dodaj serwer</span>
     </Link>
   );
 }

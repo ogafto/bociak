@@ -15,11 +15,10 @@ import {
   type MessageCreateOptions,
 } from "discord.js";
 import { createHash } from "node:crypto";
-import { BRAND, MODULES as CATALOG } from "../src/lib/catalog.ts";
+import { BRAND, MODULES as CATALOG, getPlan } from "../src/lib/catalog.ts";
 import { IMPLEMENTATIONS } from "./modules/index.ts";
 import { guildCommand } from "./modules/util.ts";
 import {
-  activePlan,
   decryptToken,
   disableBot,
   filterByPlan,
@@ -250,7 +249,7 @@ export class BotRuntime {
     const seen = new Set<string>();
     for (const row of rows) {
       seen.add(row.guild_id);
-      const settings = filterByPlan(parseSettings(row.modules), activePlan(row.owner_plan, row.owner_plan_until));
+      const settings = filterByPlan(parseSettings(row.modules), getPlan("start")); // wspólny Bociak = zasady Darmowego
       const key = JSON.stringify(settings);
       const current = this.guilds.get(row.guild_id);
       if (current?.key === key) continue;
@@ -512,7 +511,7 @@ function parseSettings(raw: string): ModuleSettings {
 }
 
 function ownSettings(record: BotRecord) {
-  return filterByPlan(parseSettings(record.modules), activePlan(record.owner_plan, record.owner_plan_until));
+  return filterByPlan(parseSettings(record.modules), getPlan("pro")); // opłacony Bot Pro ma wszystko
 }
 
 const hashOf = (body: unknown) => createHash("sha1").update(JSON.stringify(body)).digest("hex");

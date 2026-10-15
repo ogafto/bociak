@@ -6,12 +6,14 @@ import { requireUser } from "@/lib/auth";
 import { getServer, getSharedSnapshot } from "@/lib/db";
 import { PERMISSIONS, hasPermission } from "@/lib/guild";
 import { formatDate, toServerView } from "@/lib/bots";
-import { pickerPlan } from "@/lib/catalog";
+import { FREE_RULES } from "@/lib/catalog";
+import { plural } from "@/lib/plural";
 import { saveServerModulesAction, unlinkServerAction } from "@/app/actions/panel";
 import { btn } from "@/components/ui/button";
 import { ServerIcon } from "@/components/panel/server-card";
 import { ServerModulesForm } from "@/components/panel/server-ui";
 import { AutoRefresh } from "@/components/panel/auto-refresh";
+import { ShowcaseToggle } from "@/components/panel/billing";
 import { Curtain } from "@/components/landing/curtain";
 import { Enter, Words } from "@/components/landing/motion";
 
@@ -52,9 +54,15 @@ export default async function ServerPage({ params }: PageProps<"/panel/serwery/[
                 <Words onLoad text={server.name} />
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-white/55">
-                <Pill>
-                  <span className="size-1.5 rounded-full bg-dc-green shadow-[0_0_8px] shadow-dc-green" /> Bociak online
-                </Pill>
+                {snapshot ? (
+                  <Pill>
+                    <span className="size-1.5 rounded-full bg-dc-green shadow-[0_0_8px] shadow-dc-green" /> Bociak na serwerze
+                  </Pill>
+                ) : (
+                  <Pill>
+                    <span className="size-1.5 animate-pulse rounded-full bg-amber-400" /> Czekam na Bociaka
+                  </Pill>
+                )}
                 {textChannels !== null && (
                   <Pill>
                     <Hash className="size-3.5" /> {textChannels} {plural(textChannels, "kanał", "kanały", "kanałów")}
@@ -97,6 +105,10 @@ export default async function ServerPage({ params }: PageProps<"/panel/serwery/[
         </Enter>
       )}
 
+      <Enter delay={0.1}>
+        <ShowcaseToggle kind="server" id={server.id} on={server.showcase} />
+      </Enter>
+
       <Enter delay={0.12}>
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
@@ -107,18 +119,10 @@ export default async function ServerPage({ params }: PageProps<"/panel/serwery/[
             <p className="mt-1 text-[14.5px] text-white/50">Włącz przełącznikiem, kliknij kafelek, żeby ustawić kanał, rolę albo wygląd wiadomości.</p>
           </div>
         </div>
-        <ServerModulesForm action={saveServerModulesAction.bind(null, server.id)} initial={server.modules} plan={pickerPlan(user.plan)} guilds={snapshot ? [snapshot] : []} />
+        <ServerModulesForm action={saveServerModulesAction.bind(null, server.id)} initial={server.modules} plan={FREE_RULES} guilds={snapshot ? [snapshot] : []} />
       </Enter>
     </div>
   );
-}
-
-/** Polska odmiana: 1 kanał, 2 kanały, 5 kanałów. */
-function plural(n: number, one: string, few: string, many: string) {
-  if (n === 1) return one;
-  const d = n % 10;
-  const t = n % 100;
-  return d >= 2 && d <= 4 && (t < 12 || t > 14) ? few : many;
 }
 
 function Pill({ children }: { children: React.ReactNode }) {

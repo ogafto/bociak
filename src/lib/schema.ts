@@ -120,14 +120,18 @@ export function migrate(db: DatabaseSync) {
   `);
 
   // Kolumny dodane później – SQLite nie ma „ADD COLUMN IF NOT EXISTS”.
-  const columns = new Set((db.prepare("PRAGMA table_info(bots)").all() as { name: string }[]).map((c) => c.name));
-  const add = (name: string, def: string) => {
-    if (!columns.has(name)) db.exec(`ALTER TABLE bots ADD COLUMN ${name} ${def}`);
+  const addColumn = (table: string, name: string, def: string) => {
+    const columns = new Set((db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name));
+    if (!columns.has(name)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${def}`);
   };
-  add("runtime_status", "TEXT NOT NULL DEFAULT 'stopped'"); // stopped | starting | online | error
-  add("runtime_error", "TEXT");
-  add("runtime_info", "TEXT"); // JSON: { tag, guilds, ping }
-  add("heartbeat_at", "INTEGER"); // ms od epoki – ostatni znak życia z runnera
+  addColumn("bots", "runtime_status", "TEXT NOT NULL DEFAULT 'stopped'"); // stopped | starting | online | error
+  addColumn("bots", "runtime_error", "TEXT");
+  addColumn("bots", "runtime_info", "TEXT"); // JSON: { tag, guilds, ping }
+  addColumn("bots", "heartbeat_at", "INTEGER"); // ms od epoki – ostatni znak życia z runnera
+  // Bot Pro jest opłacany osobno: bots.hosting = okres ('month' | 'year' | 'trial'), bots.hosting_until = opłacony do (ISO).
+  addColumn("bots", "showcase", "INTEGER NOT NULL DEFAULT 0"); // zgoda na pokazanie serwerów bota na stronie głównej
+  addColumn("servers", "showcase", "INTEGER NOT NULL DEFAULT 0"); // zgoda na pokazanie serwera na stronie głównej
+  addColumn("users", "trial_used", "INTEGER NOT NULL DEFAULT 0"); // okres próbny Bota Pro – raz na konto
 
   // Konto systemowe i wpis wspólnego bota – żeby dziennik i stan modułów miały do czego się odwołać.
   // Hasło „!” nie jest poprawnym hashem bcrypt, więc na to konto nie da się zalogować.

@@ -11,6 +11,8 @@ export type CurrentUser = {
   name: string;
   plan: ReturnType<typeof getPlan>;
   planUntil: string | null;
+  /** Czy konto wykorzystało już okres próbny Bota Pro. */
+  trialUsed: boolean;
   createdAt: string;
 };
 
@@ -34,6 +36,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     name: user.name,
     plan: getPlan(planId),
     planUntil: planId === "start" ? null : user.plan_until,
+    trialUsed: user.trial_used === 1,
     createdAt: user.created_at,
   };
 });

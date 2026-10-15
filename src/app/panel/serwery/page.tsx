@@ -8,7 +8,8 @@ import { btn } from "@/components/ui/button";
 import { PageHeader } from "@/components/panel/page-header";
 import { AddServerTile, ServerCard } from "@/components/panel/server-card";
 import { Curtain } from "@/components/landing/curtain";
-import { Enter, Progress } from "@/components/landing/motion";
+import { Enter } from "@/components/landing/motion";
+import { count } from "@/lib/plural";
 import { Logo3D } from "@/components/landing/three-d";
 
 export const metadata: Metadata = { title: "Serwery" };
@@ -16,33 +17,19 @@ export const metadata: Metadata = { title: "Serwery" };
 export default async function ServersPage() {
   const user = await requireUser();
   const servers = listServers(user.id).map(toServerView);
-  const limit = user.plan.maxServers;
-  const limited = Number.isFinite(limit);
-  const canAdd = servers.length < limit;
 
   return (
     <div>
       <PageHeader
         kicker="Serwery"
         title="Serwery z Bociakiem"
-        description={limited ? `Wykorzystano ${servers.length} z ${limit} w pakiecie ${user.plan.name}.` : `${servers.length} serwerów · bez limitu w pakiecie ${user.plan.name}.`}
+        description={`${count(servers.length, "serwer", "serwery", "serwerów")} z darmowym Bociakiem · bez limitu.`}
         actions={
-          canAdd ? (
-            <Link href="/panel/serwery/dodaj" className={btn("primary", "md")}>
-              <Plus className="size-4" /> Dodaj serwer
-            </Link>
-          ) : (
-            <Link href="/panel/pakiety" className={btn("secondary", "md")}>
-              Więcej serwerów w Pro
-            </Link>
-          )
+          <Link href="/panel/serwery/dodaj" className={btn("primary", "md")}>
+            <Plus className="size-4" /> Dodaj serwer
+          </Link>
         }
       />
-      {limited && servers.length > 0 && (
-        <Enter delay={0.15} className="-mt-4 mb-8">
-          <Progress value={(servers.length / limit) * 100} className="max-w-sm" />
-        </Enter>
-      )}
 
       {servers.length === 0 ? (
         <Enter delay={0.1}>
@@ -66,7 +53,7 @@ export default async function ServersPage() {
             </Enter>
           ))}
           <Enter delay={0.08 + servers.length * 0.06}>
-            <AddServerTile disabled={!canAdd} />
+            <AddServerTile />
           </Enter>
         </div>
       )}

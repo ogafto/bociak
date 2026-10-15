@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
-import { ChevronRight, Gavel, Hash, MessageSquareX, ShieldAlert, Trash2 } from "lucide-react";
+import { Blocks, ChevronRight, Gavel, Hash, MessageSquareX, ShieldAlert, Trash2 } from "lucide-react";
 import { MESSAGE_KINDS, type MessageKind } from "@/lib/message";
 import { READY_MODULES } from "@/lib/catalog";
 import { CV2Preview } from "@/components/ui/cv2-preview";
@@ -49,7 +49,7 @@ export function ModulesIndex() {
   return (
     <section id="moduly" className="scroll-mt-20 py-24 sm:py-32">
       <div className={CONTAINER}>
-        <SectionIntro label="Moduły" title="Jeden bot." muted="Wszystko, czego potrzebuje serwer." />
+        <SectionIntro icon={Blocks} label="Moduły" title="Jeden bot." muted="Wszystko, czego potrzebuje serwer." />
 
         <Reveal tilt className="mt-14">
           <Card className="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr]">

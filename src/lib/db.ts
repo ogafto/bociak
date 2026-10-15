@@ -30,6 +30,7 @@ export type UserRow = {
   password_hash: string;
   plan: string;
   plan_until: string | null;
+  trial_used: number;
   created_at: string;
 };
 
@@ -43,8 +44,11 @@ export type BotRow = {
   client_id: string;
   token_enc: string | null;
   modules: string;
+  /** Okres opłaconego Bota Pro: 'month' | 'year' | 'trial'. */
   hosting: string | null;
+  /** Bot Pro opłacony do (ISO) – po tej dacie runner go nie uruchamia. */
   hosting_until: string | null;
+  showcase: number;
   status: "online" | "offline";
   created_at: string;
   updated_at: string;
@@ -59,7 +63,7 @@ export type BotLogRow = { id: number; level: "info" | "warn" | "error"; message:
 export type OrderRow = {
   id: string;
   user_id: string;
-  kind: "plan" | "hosting";
+  kind: "plan" | "hosting" | "bot";
   item: string;
   bot_id: string | null;
   amount: number;
@@ -152,6 +156,20 @@ export function requestStart(userId: string, botId: string) {
   ).run(botId, userId);
 }
 
+/** Bot Pro opłacony (albo w okresie próbnym) do podanej daty. */
+export function setBotPaid(userId: string, botId: string, period: "month" | "year" | "trial", until: string) {
+  db.prepare("UPDATE bots SET hosting = ?, hosting_until = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?").run(period, until, botId, userId);
+}
+
+export function setBotShowcase(userId: string, botId: string, on: boolean) {
+  db.prepare("UPDATE bots SET showcase = ? WHERE id = ? AND user_id = ?").run(on ? 1 : 0, botId, userId);
+}
+
+/** Okres próbny Bota Pro przysługuje raz na konto. */
+export function markTrialUsed(userId: string) {
+  db.prepare("UPDATE users SET trial_used = 1 WHERE id = ?").run(userId);
+}
+
 export function deleteBot(userId: string, botId: string) {
   db.prepare("DELETE FROM bots WHERE id = ? AND user_id = ?").run(botId, userId);
 }
@@ -175,6 +193,7 @@ export type ServerRow = {
   name: string;
   icon: string | null;
   modules: string;
+  showcase: number;
   created_at: string;
   updated_at: string;
 };
@@ -200,6 +219,10 @@ export function getServer(userId: string, id: string) {
 
 export function updateServerModules(userId: string, id: string, modules: string) {
   db.prepare("UPDATE servers SET modules = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?").run(modules, id, userId);
+}
+
+export function setServerShowcase(userId: string, id: string, on: boolean) {
+  db.prepare("UPDATE servers SET showcase = ? WHERE id = ? AND user_id = ?").run(on ? 1 : 0, id, userId);
 }
 
 export function deleteServer(userId: string, id: string) {
@@ -241,6 +264,53 @@ export function listBotSnapshots(userId: string, botId: string) {
     )
     .all(botId, userId) as { data: string }[];
   return rows.map(parseSnapshot).filter((s): s is GuildSnapshot => !!s);
+}
+
+// ---------- serwery na stronie głównej ----------
+
+export type ShowcaseServer = { guildId: string; name: string; icon: string | null; members: number };
+
+/**
+ * Serwery do slidera na stronie głównej – tylko te, których właściciel się zgodził
+ * (servers.showcase dla Bociaka, bots.showcase dla opłaconych botów Pro).
+ * Do tego sumy wszystkich serwerów i osób (bez nazw, więc bez zgody).
+ */
+export function getShowcase(): { servers: ShowcaseServer[]; totalServers: number; totalMembers: number } {
+  const now = new Date().toISOString();
+  const rows = db
+    .prepare(
+      `SELECT g.guild_id, g.data,
+              CASE WHEN g.bot_id = ? THEN COALESCE(s.showcase, 0) ELSE COALESCE(b.showcase, 0) END AS showcase
+       FROM guild_snapshots g
+       LEFT JOIN servers s ON g.bot_id = ? AND s.guild_id = g.guild_id
+       LEFT JOIN bots b ON b.id = g.bot_id AND g.bot_id != ?
+       WHERE (g.bot_id = ? AND s.id IS NOT NULL) OR (g.bot_id != ? AND b.hosting_until > ?)`,
+    )
+    .all(SHARED_BOT_ID, SHARED_BOT_ID, SHARED_BOT_ID, SHARED_BOT_ID, SHARED_BOT_ID, now) as { guild_id: string; data: string; showcase: number }[];
+
+  const seen = new Map<string, ShowcaseServer & { showcase: boolean }>();
+  for (const r of rows) {
+    const snap = parseSnapshot(r);
+    if (!snap) continue;
+    const prev = seen.get(r.guild_id);
+    seen.set(r.guild_id, {
+      guildId: r.guild_id,
+      name: snap.name,
+      icon: snap.icon,
+      members: Math.max(prev?.members ?? 0, snap.memberCount ?? 0),
+      showcase: !!prev?.showcase || r.showcase === 1,
+    });
+  }
+  const all = [...seen.values()];
+  return {
+    servers: all
+      .filter((s) => s.showcase)
+      .sort((a, b) => b.members - a.members)
+      .slice(0, 40)
+      .map((s) => ({ guildId: s.guildId, name: s.name, icon: s.icon, members: s.members })),
+    totalServers: all.length,
+    totalMembers: all.reduce((n, s) => n + s.members, 0),
+  };
 }
 
 // ---------- zamówienia ----------

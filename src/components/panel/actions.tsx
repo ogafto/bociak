@@ -48,6 +48,7 @@ export function CheckoutButton({
   label,
   variant = "primary",
   className = "w-full",
+  days = 30,
 }: {
   action: () => Promise<void>;
   title: string;
@@ -56,6 +57,8 @@ export function CheckoutButton({
   label: React.ReactNode;
   variant?: Parameters<typeof btn>[0];
   className?: string;
+  /** Długość opłacanego okresu – tylko do podsumowania. */
+  days?: number;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -94,7 +97,7 @@ export function CheckoutButton({
               <div className="relative mt-6 space-y-2.5 rounded-[14px] border border-white/[0.07] bg-white/[0.02] p-4 text-sm">
                 <div className="flex justify-between text-white/55">
                   <span>Okres</span>
-                  <span className="text-white/80">30 dni</span>
+                  <span className="text-white/80">{days >= 365 ? "12 miesięcy" : `${days} dni`}</span>
                 </div>
                 <div className="flex justify-between border-t border-white/[0.06] pt-2.5">
                   <span className="text-white/55">Do zapłaty</span>

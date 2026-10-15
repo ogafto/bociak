@@ -5,7 +5,7 @@ import { AlertTriangle, ArrowLeft, ExternalLink, Loader2, PartyPopper, Terminal,
 import { requireUser } from "@/lib/auth";
 import { getBot, listBotLogs, listBotSnapshots } from "@/lib/db";
 import { formatDate, toBotView } from "@/lib/bots";
-import { pickerPlan } from "@/lib/catalog";
+import { PLANS, PRO_RULES, PRO_TRIAL_DAYS } from "@/lib/catalog";
 import { deleteBotAction, updateBotAction } from "@/app/actions/panel";
 import { BotAvatar } from "@/components/ui/bot-avatar";
 import { btn } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { BotForm } from "@/components/panel/bot-form";
 import { StatusBadge } from "@/components/panel/bot-card";
 import { DeleteBotButton, PowerButton } from "@/components/panel/actions";
 import { AutoRefresh } from "@/components/panel/auto-refresh";
+import { BotBilling, ShowcaseToggle } from "@/components/panel/billing";
 import { Curtain } from "@/components/landing/curtain";
 import { Enter, Words } from "@/components/landing/motion";
 
@@ -21,12 +22,12 @@ export const metadata: Metadata = { title: "Ustawienia bota" };
 export default async function BotPage({ params, searchParams }: PageProps<"/panel/boty/[id]">) {
   const user = await requireUser();
   const { id } = await params;
-  const { nowy } = await searchParams;
+  const { nowy, oplacono, proba } = await searchParams;
   const row = getBot(user.id, id);
   if (!row) notFound();
-  const canHost = user.plan.maxBots > 0;
-  const bot = toBotView(row, canHost);
+  const bot = toBotView(row);
   const logs = listBotLogs(user.id, bot.id);
+  const pro = PLANS.find((p) => p.id === "pro")!;
 
   return (
     <div className="space-y-8">
@@ -38,7 +39,15 @@ export default async function BotPage({ params, searchParams }: PageProps<"/pane
         <Enter>
           <div className="flex items-center gap-3 rounded-[14px] border border-dc-green/25 bg-dc-green/[0.06] px-5 py-4 text-[14.5px] text-white">
             <PartyPopper className="size-5 shrink-0 text-dc-green" />
-            Bot „{bot.name}” został utworzony! Kliknij „Uruchom bota”, a potem dodaj go na swój serwer.
+            Bot „{bot.name}” został utworzony! Opłać go albo włącz okres próbny, kliknij „Uruchom bota” i dodaj go na swój serwer.
+          </div>
+        </Enter>
+      )}
+      {(oplacono || proba) && (
+        <Enter>
+          <div className="flex items-center gap-3 rounded-[14px] border border-dc-green/25 bg-dc-green/[0.06] px-5 py-4 text-[14.5px] text-white">
+            <PartyPopper className="size-5 shrink-0 text-dc-green" />
+            {proba ? `Okres próbny aktywny – masz ${PRO_TRIAL_DAYS} dni na sprawdzenie Bota Pro.` : "Dziękujemy! Bot Pro jest opłacony."} Teraz kliknij „Uruchom bota”.
           </div>
         </Enter>
       )}
@@ -61,7 +70,7 @@ export default async function BotPage({ params, searchParams }: PageProps<"/pane
                 <StatusBadge state={bot.runtime} />
               </div>
               <div className="mt-1 text-sm text-white/50">
-                Utworzono {formatDate(bot.createdAt)} · {Object.keys(bot.modules).length} modułów · hosting w cenie {user.plan.name}
+                Utworzono {formatDate(bot.createdAt)} · {Object.keys(bot.modules).length} modułów · hosting 24/7 w cenie
               </div>
             </div>
             <PowerButton botId={bot.id} online={bot.wanted} />
@@ -69,12 +78,17 @@ export default async function BotPage({ params, searchParams }: PageProps<"/pane
         </div>
       </Enter>
 
-      {!canHost && (
-        <div className="flex flex-col gap-3 rounded-[14px] border border-dc-yellow/25 bg-dc-yellow/[0.06] p-5 text-sm text-amber-50 sm:flex-row sm:items-center">
-          <span className="flex-1">Twój pakiet nie obejmuje własnego bota, więc jest wyłączony. Konfiguracja zostaje zapisana.</span>
-          <Link href="/panel/pakiety" className={btn("primary", "sm")}>Przejdź na Pro</Link>
-        </div>
-      )}
+      <Enter delay={0.08}>
+        <BotBilling
+          botId={bot.id}
+          botName={bot.name}
+          payment={bot.payment}
+          trialAvailable={!user.trialUsed}
+          monthly={pro.price!}
+          yearly={pro.yearlyPrice!}
+          trialDays={PRO_TRIAL_DAYS}
+        />
+      </Enter>
 
       {/* stan na żywo z runnera */}
       {bot.wanted && <AutoRefresh every={bot.runtime === "online" ? 15000 : 4000} />}
@@ -93,8 +107,10 @@ export default async function BotPage({ params, searchParams }: PageProps<"/pane
           clientId: bot.clientId,
           modules: bot.modules,
         }}
-        plan={{ name: user.plan.name, ...pickerPlan(user.plan) }}
+        plan={{ name: pro.name, ...PRO_RULES }}
       />
+
+      <ShowcaseToggle kind="bot" id={bot.id} on={bot.showcase} />
 
       {/* dziennik */}
       <section>

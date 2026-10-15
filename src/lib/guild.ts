@@ -25,6 +25,7 @@ export type GuildSnapshot = {
   roles: SnapshotRole[]; // bez @everyone
   botRolePosition: number; // najwyższa rola bota – role wyżej są poza jego zasięgiem
   botPermissions: string; // bitfield jako string (BigInt)
+  memberCount?: number; // liczba osób na serwerze (starsze zapisy jej nie mają)
   updatedAt: number;
 };
 

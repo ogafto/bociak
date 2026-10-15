@@ -4,7 +4,8 @@ import { ArrowRight, Bot, Check, Crown, Plus, Server, Sparkles } from "lucide-re
 import { requireUser } from "@/lib/auth";
 import { listBots, listOrders, listServers } from "@/lib/db";
 import { formatDate, toBotView, toServerView } from "@/lib/bots";
-import { PLANS, formatPrice, getPlan } from "@/lib/catalog";
+import { PLANS, PRO_TRIAL_DAYS, formatPrice, getPlan } from "@/lib/catalog";
+import { plural } from "@/lib/plural";
 import { btn } from "@/components/ui/button";
 import { BotCard } from "@/components/panel/bot-card";
 import { AddServerTile, ServerCard } from "@/components/panel/server-card";
@@ -22,20 +23,25 @@ function greeting() {
 export default async function PanelHome({ searchParams }: PageProps<"/panel">) {
   const user = await requireUser();
   const { witaj } = await searchParams;
-  const canHost = user.plan.maxBots > 0;
   const servers = listServers(user.id).map(toServerView);
-  const bots = listBots(user.id).map((b) => toBotView(b, canHost));
+  const bots = listBots(user.id).map((b) => toBotView(b));
+  const canHost = bots.length > 0;
   const orders = listOrders(user.id).slice(0, 5);
   const pro = PLANS.find((p) => p.id === "pro")!;
-  const limited = Number.isFinite(user.plan.maxServers);
   const modulesOn = servers.reduce((n, s) => n + Object.keys(s.modules).length, 0);
+  const paidBots = bots.filter((b) => b.payment.paid).length;
 
   // pierwsze kroki – lista, która sama się odhacza
   const steps = [
     { done: true, title: "Załóż konto", text: "Gotowe – witaj w Bociaku!", href: null },
     { done: servers.length > 0, title: "Dodaj Bociaka na serwer", text: "Dwa kliknięcia i komenda /polacz.", href: "/panel/serwery/dodaj" },
     { done: modulesOn > 0, title: "Włącz pierwsze moduły", text: "Powitania, moderacja, tickety…", href: servers[0] ? `/panel/serwery/${servers[0].id}` : "/panel/serwery/dodaj" },
-    { done: user.plan.id !== "start", title: "Własny bot w Pro", text: "Twoja nazwa, avatar i wszystkie moduły.", href: "/panel/pakiety" },
+    {
+      done: paidBots > 0,
+      title: "Wypróbuj Bota Pro",
+      text: user.trialUsed ? "Twoja nazwa, avatar i wszystkie moduły." : `${PRO_TRIAL_DAYS} dni za darmo, potem ${formatPrice(pro.price)} / mies.`,
+      href: bots[0] ? `/panel/boty/${bots[0].id}` : "/panel/boty/nowy",
+    },
   ];
   const doneCount = steps.filter((s) => s.done).length;
 
@@ -69,14 +75,15 @@ export default async function PanelHome({ searchParams }: PageProps<"/panel">) {
                 <Words onLoad text={`${user.name} 👋`} delay={0.1} />
               </h1>
               <p className="mt-4 max-w-md text-[15.5px] leading-relaxed text-white/65">
-                Pakiet <b className="font-medium text-white">{user.plan.name}</b> · {servers.length} {servers.length === 1 ? "serwer" : "serwerów"} z Bociakiem · {modulesOn} włączonych modułów
+                {servers.length} {plural(servers.length, "serwer", "serwery", "serwerów")} z Bociakiem · {modulesOn} {plural(modulesOn, "włączony moduł", "włączone moduły", "włączonych modułów")}
+                {bots.length > 0 && ` · ${paidBots} ${plural(paidBots, "aktywny Bot Pro", "aktywne Boty Pro", "aktywnych Botów Pro")}`}
               </p>
               <div className="mt-7 flex flex-wrap gap-2.5">
                 <Link href="/panel/serwery/dodaj" className={btn("primary", "md")}>
                   <Plus className="size-4" /> Dodaj serwer
                 </Link>
-                <Link href={canHost ? "/panel/boty" : "/panel/pakiety"} className={btn("secondary", "md")}>
-                  <Bot className="size-4" /> {canHost ? "Własny bot" : "Własny bot w Pro"}
+                <Link href={canHost ? "/panel/boty" : "/panel/boty/nowy"} className={btn("secondary", "md")}>
+                  <Bot className="size-4" /> {canHost ? "Moje boty" : "Stwórz Bota Pro"}
                 </Link>
               </div>
             </div>
@@ -94,8 +101,7 @@ export default async function PanelHome({ searchParams }: PageProps<"/panel">) {
         <Enter delay={0.08}>
           <Stat icon={Server} label="Serwery z Bociakiem">
             <CountUp to={servers.length} />
-            {limited && <span className="text-white/35"> / {user.plan.maxServers}</span>}
-            {limited && <Progress value={(servers.length / user.plan.maxServers) * 100} className="mt-4" />}
+            <div className="mt-3 text-[12.5px] font-normal tracking-normal text-white/40">bez limitu, za darmo</div>
           </Stat>
         </Enter>
         <Enter delay={0.14}>
@@ -105,9 +111,12 @@ export default async function PanelHome({ searchParams }: PageProps<"/panel">) {
           </Stat>
         </Enter>
         <Enter delay={0.2}>
-          <Stat icon={Crown} label="Pakiet">
-            {user.plan.name}
-            <div className="mt-3 text-[12.5px] font-normal tracking-normal text-white/40">{user.planUntil ? `aktywny do ${formatDate(user.planUntil)}` : "bez limitu czasu"}</div>
+          <Stat icon={Crown} label="Boty Pro">
+            <CountUp to={paidBots} />
+            {bots.length > 0 && <span className="text-white/35"> / {bots.length}</span>}
+            <div className="mt-3 text-[12.5px] font-normal tracking-normal text-white/40">
+              {bots.length ? "opłaconych botów" : user.trialUsed ? `${formatPrice(pro.price)} / mies. za bota` : `${PRO_TRIAL_DAYS} dni za darmo na start`}
+            </div>
           </Stat>
         </Enter>
       </div>
@@ -169,7 +178,7 @@ export default async function PanelHome({ searchParams }: PageProps<"/panel">) {
             </Enter>
           ))}
           <Enter delay={0.1 + Math.min(servers.length, 5) * 0.06}>
-            <AddServerTile disabled={servers.length >= user.plan.maxServers} />
+            <AddServerTile />
           </Enter>
         </div>
       </section>
@@ -189,8 +198,8 @@ export default async function PanelHome({ searchParams }: PageProps<"/panel">) {
                 <p className="mt-2 text-[14.5px] leading-relaxed text-white/60">
                   Zamiast Bociaka – Twój własny bot. Wszystkie moduły, pełny kreator wiadomości, hosting 24/7 w cenie i bez limitu serwerów. Za {formatPrice(pro.price)} miesięcznie.
                 </p>
-                <Link href="/panel/pakiety" className={btn("primary", "md", "mt-6")}>
-                  Przejdź na Pro <ArrowRight className="size-4" />
+                <Link href="/panel/boty/nowy" className={btn("primary", "md", "mt-6")}>
+                  Stwórz Bota Pro <ArrowRight className="size-4" />
                 </Link>
               </div>
             </div>
