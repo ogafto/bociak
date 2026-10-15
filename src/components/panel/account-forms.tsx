@@ -7,8 +7,8 @@ import { Alert, SubmitButton } from "@/components/ui/form";
 export function ProfileForm({ name, email }: { name: string; email: string }) {
   const [state, action] = useActionState<FormState, FormData>(updateProfileAction, {});
   return (
-    <form action={action} className="card space-y-5 p-6">
-      <h2 className="font-semibold text-white">Profil</h2>
+    <form action={action} data-spot className="card h-full space-y-5 p-6">
+      <h2 className="text-[19px] font-medium tracking-[-0.02em] text-white">Profil</h2>
       {state.error && <Alert>{state.error}</Alert>}
       {state.success && <Alert kind="success">{state.success}</Alert>}
       <div>
@@ -27,8 +27,8 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
 export function PasswordForm() {
   const [state, action] = useActionState<FormState, FormData>(changePasswordAction, {});
   return (
-    <form action={action} className="card space-y-5 p-6">
-      <h2 className="font-semibold text-white">Zmiana hasła</h2>
+    <form action={action} data-spot className="card h-full space-y-5 p-6">
+      <h2 className="text-[19px] font-medium tracking-[-0.02em] text-white">Zmiana hasła</h2>
       {state.error && <Alert>{state.error}</Alert>}
       {state.success && <Alert kind="success">{state.success}</Alert>}
       <div>
