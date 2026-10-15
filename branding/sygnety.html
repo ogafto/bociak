@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bociak – propozycje sygnetu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #07070b; --card: #0f0f1a; --line: rgb(255 255 255 / .08); --muted: rgb(255 255 255 / .5); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: #fff; font-family: Geist, system-ui, sans-serif; padding: 48px 16px 80px; }
+  header { max-width: 1120px; margin: 0 auto 40px; }
+  h1 { font-size: 40px; letter-spacing: -.03em; margin: 0; font-weight: 600; }
+  header p { color: var(--muted); margin: 8px 0 0; font-size: 16px; }
+  .grid { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+  .card { background: linear-gradient(180deg, #141423, var(--card)); border: 1px solid var(--line); border-radius: 24px; padding: 24px; }
+  .num { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: #a18bff; font-weight: 500; }
+  .name { font-size: 20px; font-weight: 600; margin: 4px 0 4px; }
+  .desc { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0 0 20px; min-height: 42px; }
+  .row { display: flex; align-items: center; gap: 14px; }
+
+  /* kafel z gradientem (ikona aplikacji / avatar Discord) */
+  .tile { --cut: #5b3ef0; width: 112px; height: 112px; border-radius: 28px; display: grid; place-items: center; color: #fff;
+    background: linear-gradient(145deg, #b3a1ff 0%, #7c5cff 45%, #5865f2 100%);
+    box-shadow: 0 20px 50px -18px rgb(124 92 255 / .9), inset 0 1px 0 rgb(255 255 255 / .3); }
+  .tile svg { width: 78%; height: 78%; }
+  .chip { --cut: #0f0f1a; width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; border: 1px solid var(--line); color: #a18bff; background: #0f0f1a; }
+  .chip.light { --cut: #fff; background: #fff; color: #5b3ef0; }
+  .chip svg { width: 40px; height: 40px; }
+  .fav { display: flex; align-items: end; gap: 10px; margin-left: auto; }
+  .fav .t { --cut: #6a4cf5; border-radius: 22%; display: grid; place-items: center; color: #fff; background: linear-gradient(145deg, #a18bff, #6440f5); }
+  .fav .t svg { width: 82%; height: 82%; }
+
+  .lockup { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
+  .lockup .t { --cut: #6a4cf5; width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; color: #fff; background: linear-gradient(145deg, #b3a1ff, #6440f5 70%, #5865f2); box-shadow: 0 0 24px -6px rgb(124 92 255 / .8); }
+  .lockup .t svg { width: 80%; height: 80%; }
+  .word { font-size: 27px; font-weight: 700; letter-spacing: -.04em; position: relative; }
+  .word .i { position: relative; }
+  .word .i::after { content: ""; position: absolute; left: 50%; top: .02em; width: .2em; height: .2em; border-radius: 50%; transform: translateX(-50%);
+    background: linear-gradient(145deg, #c4b5ff, #7c5cff); box-shadow: 0 0 10px #7c5cff; }
+  .lockup .tld { color: var(--muted); font-weight: 500; font-size: 15px; margin-left: -6px; align-self: flex-end; padding-bottom: 5px; }
+</style>
+</head>
+<body>
+
+<!-- Definicje sygnetów: rysowane w currentColor, „wycięcia” w kolorze var(--cut) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- 1. Kociak-bot: głowa robota z kocimi uszami -->
+  <symbol id="s-kot" viewBox="0 0 64 64">
+    <path d="M14 30 L15.5 9 L29 22 Z M50 30 L48.5 9 L35 22 Z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="9" y="20" width="46" height="35" rx="15" fill="currentColor"/>
+    <rect x="20" y="31" width="7" height="12" rx="3.5" style="fill:var(--cut)"/>
+    <rect x="37" y="31" width="7" height="12" rx="3.5" style="fill:var(--cut)"/>
+    <path d="M27.5 47.5 q2.25 2.4 4.5 0 q2.25 2.4 4.5 0" fill="none" style="stroke:var(--cut)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <!-- 2. Mrugacz: robot puszczający oczko -->
+  <symbol id="s-mrug" viewBox="0 0 64 64">
+    <rect x="30.5" y="10" width="3" height="11" rx="1.5" fill="currentColor"/>
+    <circle cx="32" cy="9" r="4.5" fill="currentColor"/>
+    <rect x="6" y="31" width="6" height="11" rx="3" fill="currentColor"/>
+    <rect x="52" y="31" width="6" height="11" rx="3" fill="currentColor"/>
+    <rect x="10" y="20" width="44" height="33" rx="14" fill="currentColor"/>
+    <circle cx="23" cy="34" r="4.5" style="fill:var(--cut)"/>
+    <path d="M36.5 35.5 q4.5 -5.5 9 0" fill="none" style="stroke:var(--cut)" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M25 43.5 q7 5 14 0" fill="none" style="stroke:var(--cut)" stroke-width="3.2" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 3. Litera b z twarzą -->
+  <symbol id="s-b" viewBox="0 0 64 64">
+    <rect x="12" y="7" width="11" height="49" rx="5.5" fill="currentColor"/>
+    <rect x="12" y="23" width="41" height="33" rx="16.5" fill="currentColor"/>
+    <rect x="12" y="38" width="22" height="18" rx="5.5" fill="currentColor"/>
+    <rect x="28" y="33" width="6.5" height="11" rx="3.25" style="fill:var(--cut)"/>
+    <rect x="40" y="33" width="6.5" height="11" rx="3.25" style="fill:var(--cut)"/>
+  </symbol>
+
+  <!-- 4. Dymek czatu z oczami -->
+  <symbol id="s-dymek" viewBox="0 0 64 64">
+    <path d="M17 44 L13 56 L29 45 Z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="7" y="9" width="50" height="38" rx="15" fill="currentColor"/>
+    <rect x="20" y="20" width="7.5" height="14" rx="3.75" style="fill:var(--cut)"/>
+    <rect x="36.5" y="20" width="7.5" height="14" rx="3.75" style="fill:var(--cut)"/>
+  </symbol>
+
+  <!-- 5. Jednooki: miękki kształt z jednym dużym okiem -->
+  <symbol id="s-oko" viewBox="0 0 64 64">
+    <path d="M32 15 q-1 -6 5 -9" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+    <circle cx="38" cy="6" r="3.6" fill="currentColor"/>
+    <path d="M32 14c13 0 23 8.5 23 21.5S45.5 57 32 57 9 48.5 9 35.5 19 14 32 14z" fill="currentColor"/>
+    <circle cx="32" cy="35" r="11" style="fill:var(--cut)"/>
+    <circle cx="35" cy="32" r="4.6" fill="currentColor"/>
+  </symbol>
+
+  <!-- 6. Pixel: 8-bitowy robocik (klimat gier) -->
+  <symbol id="s-pixel" viewBox="0 0 64 64">
+    <g fill="currentColor" shape-rendering="crispEdges">
+      <rect x="29.5" y="6" width="5" height="5"/><rect x="29.5" y="11" width="5" height="5"/>
+      <rect x="14.5" y="16" width="35" height="5"/>
+      <rect x="9.5" y="21" width="45" height="5"/>
+      <rect x="9.5" y="26" width="10" height="10"/><rect x="24.5" y="26" width="15" height="10"/><rect x="44.5" y="26" width="10" height="10"/>
+      <rect x="9.5" y="36" width="45" height="5"/>
+      <rect x="9.5" y="41" width="15" height="5"/><rect x="39.5" y="41" width="15" height="5"/>
+      <rect x="14.5" y="46" width="35" height="5"/>
+    </g>
+  </symbol>
+</svg>
+
+<header>
+  <h1>Bociak · propozycje sygnetu</h1>
+  <p>Każdy sygnet pokazany jako ikona/avatar, na ciemnym i jasnym tle, w rozmiarze favicony (32 i 16 px) oraz z napisem.</p>
+</header>
+
+<main class="grid" id="grid"></main>
+
+<script>
+  const IDEAS = [
+    ["s-kot", "Kociak-bot", "Gra słów kociak → bociak. Robot z kocimi uszkami – najbardziej charakterystyczny i zapamiętywalny."],
+    ["s-mrug", "Mrugacz", "Klasyczny robocik z anteną, który puszcza oczko. Sympatyczny, „z jajem”, świetny na maskotkę."],
+    ["s-b", "Literka b", "Mała litera „b” z oczami w brzuszku. Najbardziej minimalistyczny i „firmowy”."],
+    ["s-dymek", "Dymek", "Dymek czatu z oczami – bot, który gada na Twoim serwerze. Mocne skojarzenie z Discordem."],
+    ["s-oko", "Jednooki", "Miękki kształt z jednym dużym okiem i zakręconą anteną. Nowoczesny, trochę jak postać z bajki."],
+    ["s-pixel", "Pixel", "8-bitowy robocik w klimacie gier. Wyraźny nawet w malutkich rozmiarach."],
+  ];
+  const svg = (id) => `<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#${id}"/></svg>`;
+  document.getElementById("grid").innerHTML = IDEAS.map(([id, name, desc], i) => `
+    <section class="card">
+      <div class="num">Propozycja ${i + 1}</div>
+      <div class="name">${name}</div>
+      <p class="desc">${desc}</p>
+      <div class="row">
+        <div class="tile">${svg(id)}</div>
+        <div style="display:grid;gap:10px">
+          <div class="chip">${svg(id)}</div>
+          <div class="chip light">${svg(id)}</div>
+        </div>
+        <div class="fav">
+          <div class="t" style="width:32px;height:32px">${svg(id)}</div>
+          <div class="t" style="width:16px;height:16px">${svg(id)}</div>
+        </div>
+      </div>
+      <div class="lockup">
+        <div class="t">${svg(id)}</div>
+        <span class="word">boc<span class="i">ı</span>ak</span><span class="tld">.pl</span>
+      </div>
+    </section>`).join("");
+</script>
+</body>
+</html>
